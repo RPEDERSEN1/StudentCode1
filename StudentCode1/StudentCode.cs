@@ -34,9 +34,6 @@ namespace StudentPiER
         /// <summary>
         /// This is your robot
         /// </summary>
-        private GrizzlyEncoder GrizzlyEncoder0;
-        private GrizzlyEncoder GrizzlyEncoder1;
-        
         private Robot robot;
 
         /// <summary>
@@ -53,6 +50,17 @@ namespace StudentPiER
         /// The left drive motor, on connector M1
         /// </summary>
         private GrizzlyBear leftMotor;
+
+        /// <summary>
+        ///The encoder connected to the left motor.
+        /// </summary>
+        private GrizzlyEncoder leftEncoder;
+
+        /// <summary>
+        /// The encoder connected to the right motor.
+        /// </summary>
+        private GrizzlyEncoder rightEncoder;
+
 
         /// <summary>
         /// The sonar sensor on connector A5
@@ -78,7 +86,7 @@ namespace StudentPiER
         /// </param>
         public StudentCode(Robot robot)
         {
-            
+
             this.robot = robot;
             this.stopwatch = new Stopwatch();
             this.stopwatch.Start();
@@ -91,8 +99,9 @@ namespace StudentPiER
             this.rightMotor = new GrizzlyBear(robot, Watson.Motor.M1);
             this.sonar = new AnalogSonarDistanceSensor(robot, Watson.Analog.A5);
 
-            this.GrizzlyEncoder0 = new GrizzlyEncoder(1, leftMotor, robot);
-            this.GrizzlyEncoder1 = new GrizzlyEncoder(1, rightMotor, robot);
+            this.leftEncoder = new GrizzlyEncoder(1, leftMotor, robot);
+            this.rightEncoder = new GrizzlyEncoder(1, rightMotor, robot);
+
         }
 
         /// <summary>
@@ -156,10 +165,74 @@ namespace StudentPiER
         /// </summary>
         public void AutonomousCode()
         {
-            float i = this.GrizzlyEncoder0.Displacement;
-            this.leftMotor.Throttle = (int)i;
-            Debug.Print("Autonomous");
-             
+            //float i = this.leftEncoder.Displacement;
+            // this.leftMotor.Throttle = (int)i;
+            //Debug.Print("Autonomous");
+
+
+            //The simulator robot doesn't seem to have encoders 
+            //and I haven't had time to test it on the real robot, so this hasn't been tested. 
+            //I think it should make the robot drive around and do some turns, then stop. 
+            //It's not very well designed, but hopefully it works.
+            // - Patrick
+            Debug.Print("Left Distance: " + this.leftEncoder.Displacement);
+            Debug.Print("Right Distance: " + this.rightEncoder.Displacement);
+
+
+            int flag = 0;
+
+            while (flag == 0)
+            {
+                this.rightMotor.Throttle = 100;
+                this.leftMotor.Throttle = 100;
+                if (this.leftEncoder.Displacement > 5)
+                {
+                    flag = 1;
+                }
+            }
+            while (flag == 1)
+            {
+                this.rightMotor.Throttle = 0;
+                this.leftMotor.Throttle = 100;
+                if (this.leftEncoder.Displacement > 1)
+                {
+                    flag = 2;
+                }
+            }
+            while (flag == 2)
+            {
+                this.rightMotor.Throttle = 100;
+                this.leftMotor.Throttle = 100;
+                if (this.leftEncoder.Displacement > 5)
+                {
+                    flag = 3;
+                }
+            }
+            while (flag == 3)
+            {
+                this.rightMotor.Throttle = 100;
+                this.leftMotor.Throttle = 0;
+                if (this.rightEncoder.Displacement > 1)
+                {
+                    flag = 4;
+                }
+            }
+
+            while (flag == 4)
+            {
+                this.rightMotor.Throttle = 100;
+                this.leftMotor.Throttle = 100;
+                if (this.leftEncoder.Displacement > 5)
+                {
+                    flag = 5;
+                }
+            }
+            while (flag == 5)
+            {
+                return;
+            }
+
+
         }
 
         /// <summary>
