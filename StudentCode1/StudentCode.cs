@@ -204,10 +204,31 @@ namespace StudentPiER
             //I think it should make the robot drive around and do some turns, then stop.
             //It's not very well designed, but hopefully it works.
             // - Patrick
+            //What are you trying to do?
+            //I'm still confused...
+            // - Daniel
+            //This goes at full speed until halfway (distances )
             Debug.Print("Left Distance: " + this.leftEncoder.Displacement);
             Debug.Print("Right Distance: " + this.rightEncoder.Displacement);
 
-
+            int totalDistance = 0; //Measure this later
+            int leftDistance = this.leftEncoder.Displacement;
+            int rightDistance = this.rightEncoder.Displacement;
+            int throttle = 0;//ignore for now
+            if (leftDistance <= totalDistance && rightDistance <= totalDistance/2) {
+                this.rightMotor.Throttle = 100;
+                this.leftMotor.Throttle = 100;
+            }
+            else if (leftDistance <= totalDistance && rightDistance <= totalDistance){
+                this.rightMotor.Throttle = 50;
+                this.leftMotor.Throttle = 50;
+            }
+            else {
+                this.rightMotor.Throttle = 0;
+                this.leftMotor.Throttle = 0;
+            }
+            
+            /*
             int flag = 0;
 
             while (flag == 0)
@@ -260,7 +281,8 @@ namespace StudentPiER
             {
                 return;
             }
-
+            */
+            
 
         }
 
