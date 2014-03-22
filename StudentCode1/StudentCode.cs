@@ -2,7 +2,7 @@
 // Licensed to Pioneers in Engineering under one
 // or more contributor license agreements.  See the NOTICE file
 // distributed with this work for additional information
-// regarding copyright ownership.  Pioneers in Engineering licenses 
+// regarding copyright ownership.  Pioneers in Engineering licenses
 // this file to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 //  with the License.  You may obtain a copy of the License at
@@ -31,6 +31,8 @@ namespace StudentPiER
     /// </summary>
     public class StudentCode : RobotCode
     {
+
+        //private double multiplier;
         /// <summary>
         /// This is your robot
         /// </summary>
@@ -139,16 +141,43 @@ namespace StudentPiER
         {
             Debug.Print("Tele-op " + this.stopwatch.ElapsedTime);
 
-            this.rightMotor.Throttle = this.robot.PiEMOSAnalogVals[1];
-            this.leftMotor.Throttle = -1 * this.robot.PiEMOSAnalogVals[3];
+
+
+            int rightStick = this.robot.PiEMOSAnalogVals[1];
+            int leftStick = this.robot.PiEMOSAnalogVals[3];
+
+            int rightMotorSpeed = 0;
+            int leftMotorSpeed = 0;
+
+            int lower = 70; // lower bound
+            int upper = 100; // upper bound
+            double diff = (upper - lower) / 100.0; // some factor that will be used
+            if (Math.Abs(rightStick) >= 10)
+            {
+                //                (gives you sign +1 or -1)
+                rightMotorSpeed = (rightStick / Math.Abs(rightStick)) * lower + (int)(rightStick * diff);
+                Debug.Print(rightMotorSpeed.ToString());
+                Debug.Print(rightStick.ToString());
+            }
+            if (Math.Abs(leftStick) >= 10)
+            {
+                leftMotorSpeed = (leftStick / Math.Abs(leftStick)) * lower + (int)(leftStick * diff);
+            }
+
+            this.rightMotor.Throttle = rightMotorSpeed;
+            this.leftMotor.Throttle = -1 * leftMotorSpeed;
+
+
 
             this.robot.FeedbackAnalogVals[0] = this.rightMotor.Throttle;
             this.robot.FeedbackAnalogVals[1] = this.leftMotor.Throttle;
 
-            if (this.sonar.Distance < 12)
-            {
-                Debug.Print("About to crash into a wall!");
-            }
+            //Debug.Print(this.leftMotor.Throttle.ToString());
+
+            //if (this.sonar.Distance < 12)
+            //{
+            //    Debug.Print("About to crash into a wall!");
+            //}
 
             if (this.useRfid)
             {
@@ -170,9 +199,9 @@ namespace StudentPiER
             //Debug.Print("Autonomous");
 
 
-            //The simulator robot doesn't seem to have encoders 
-            //and I haven't had time to test it on the real robot, so this hasn't been tested. 
-            //I think it should make the robot drive around and do some turns, then stop. 
+            //The simulator robot doesn't seem to have encoders
+            //and I haven't had time to test it on the real robot, so this hasn't been tested.
+            //I think it should make the robot drive around and do some turns, then stop.
             //It's not very well designed, but hopefully it works.
             // - Patrick
             Debug.Print("Left Distance: " + this.leftEncoder.Displacement);
@@ -248,7 +277,7 @@ namespace StudentPiER
         /// <summary>
         /// The robot will call this method periodically while it is disabled
         /// during the user  period. Actuators will not be updated
-        /// during this time. 
+        /// during this time.
         /// </summary>
         public void DisabledTeleoperatedCode()
         {
