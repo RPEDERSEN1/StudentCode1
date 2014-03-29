@@ -44,14 +44,19 @@ namespace StudentPiER
         private Stopwatch stopwatch;
 
         /// <summary>
-        /// The right drive motor, on connector M0
+        /// The left drive motor, on connector M0
         /// </summary>
         private GrizzlyBear rightMotor;
 
         /// <summary>
-        /// The left drive motor, on connector M1
+        /// The right drive motor, on connector M1
         /// </summary>
         private GrizzlyBear leftMotor;
+
+        /// <summary>
+        /// gearbox, on connector M2
+        /// </summary>
+        private GrizzlyBear gearbox;
 
         /// <summary>
         ///The encoder connected to the left motor.
@@ -79,6 +84,8 @@ namespace StudentPiER
         /// </summary>
         private Rfid rfid;
 
+
+
         /// <summary>
         ///   Initializes a new instance of the
         ///   <see cref="StudentPiER.StudentCode"/> class.
@@ -99,10 +106,11 @@ namespace StudentPiER
             }
             this.leftMotor = new GrizzlyBear(robot, Watson.Motor.M0);
             this.rightMotor = new GrizzlyBear(robot, Watson.Motor.M1);
+            this.gearbox = new GrizzlyBear(robot, Watson.Motor.M2, 0, 100, true);
             this.sonar = new AnalogSonarDistanceSensor(robot, Watson.Analog.A5);
 
-            this.leftEncoder = new GrizzlyEncoder(1, leftMotor, robot);
-            this.rightEncoder = new GrizzlyEncoder(1, rightMotor, robot);
+            this.leftEncoder = new GrizzlyEncoder(10, leftMotor, robot);
+            this.rightEncoder = new GrizzlyEncoder(10, rightMotor, robot);
 
         }
 
@@ -130,6 +138,13 @@ namespace StudentPiER
             return this.robot;
         }
 
+        //motor controller
+        public void motorControl(int left, int right)
+        {
+            this.leftMotor.Throttle = left;
+            this.rightMotor.Throttle = right;
+        }
+        
         /// <summary>
         /// The robot will call this method every time it needs to run the
         /// user-controlled student code
@@ -137,36 +152,79 @@ namespace StudentPiER
         /// new PiEMOS analog/digital values and then use them to update the
         /// actuator states
         /// </summary>
+        public int lower = 70; // lower bound
+        public int upper = 100; // upper bound
         public void TeleoperatedCode()
         {
             Debug.Print("Tele-op " + this.stopwatch.ElapsedTime);
 
+            bool buttonB = this.robot.PiEMOSDigitalVals[1];
+            bool leftButton = this.robot.PiEMOSDigitalVals[4];
+            bool rightButton = this.robot.PiEMOSDigitalVals[5];
 
-
+            bool rightDigitalStick = this.robot.PiEMOSDigitalVals[6];
             int rightStick = this.robot.PiEMOSAnalogVals[1];
+            
             int leftStick = this.robot.PiEMOSAnalogVals[3];
+
+            int leftTrigger = this.robot.PiEMOSAnalogVals[4];
 
             int rightMotorSpeed = 0;
             int leftMotorSpeed = 0;
 
-            int lower = 70; // lower bound
-            int upper = 100; // upper bound
+
+            //power given to motors will always be above a certain threshold (lower bound)
+            // features jimmy would call useless
+            if (leftButton)
+            {
+                lower--;
+                Debug.Print(lower.ToString());
+                leftButton = false;
+
+            }
+            if (rightButton)
+            {
+                lower++;
+                Debug.Print(lower.ToString());
+                rightButton = false;
+            }
+
             double diff = (upper - lower) / 100.0; // some factor that will be used
             if (Math.Abs(rightStick) >= 10)
             {
                 //                (gives you sign +1 or -1)
                 rightMotorSpeed = (rightStick / Math.Abs(rightStick)) * lower + (int)(rightStick * diff);
-                Debug.Print(rightMotorSpeed.ToString());
-                Debug.Print(rightStick.ToString());
             }
             if (Math.Abs(leftStick) >= 10)
             {
                 leftMotorSpeed = (leftStick / Math.Abs(leftStick)) * lower + (int)(leftStick * diff);
+                            
             }
 
-            this.rightMotor.Throttle = rightMotorSpeed;
-            this.leftMotor.Throttle = -1 * leftMotorSpeed;
+            //slow mode (left Trigger)
+            if (leftTrigger > 5)
+            {
+                rightMotorSpeed = (int)(0.7 * rightMotorSpeed);
+                leftMotorSpeed = (int)(0.7 * leftMotorSpeed);
+            }
+            //reversing left motor for sim purposes
+            if (rightDigitalStick)
+            {
+                //leftMotorSpeed = -1 * leftMotorSpeed;
+                this.leftMotor.ReverseMotorDirection = true;
+                rightDigitalStick = false;
+            }
+           
+            Debug.Print(leftTrigger.ToString());
 
+            //gearbox runs when B button is pressed
+            if (buttonB)
+            {
+                this.gearbox.Throttle = 80;
+            }
+
+
+            motorControl(leftMotorSpeed, rightMotorSpeed);
 
 
             this.robot.FeedbackAnalogVals[0] = this.rightMotor.Throttle;
@@ -208,12 +266,12 @@ namespace StudentPiER
             //I'm still confused...
             // - Daniel
             //This goes at full speed until halfway (distances )
-            Debug.Print("Left Distance: " + this.leftEncoder.Displacement);
-            Debug.Print("Right Distance: " + this.rightEncoder.Displacement);
 
+            /*
             int totalDistance = 0; //Measure this later
-            int leftDistance = this.leftEncoder.Displacement;
-            int rightDistance = this.rightEncoder.Displacement;
+            int leftDistance = (int)this.leftEncoder.Displacement;
+            int rightDistance = (int)this.rightEncoder.Displacement;
+            Debug.Print(this.leftEncoder.Displacement.ToString());
             int throttle = 0;//ignore for now
             if (leftDistance <= totalDistance && rightDistance <= totalDistance/2) {
                 this.rightMotor.Throttle = 100;
@@ -226,8 +284,21 @@ namespace StudentPiER
             else {
                 this.rightMotor.Throttle = 0;
                 this.leftMotor.Throttle = 0;
+            }*/
+
+            //sonar autonomous
+            Debug.Print(this.sonar.Distance.ToString());
+            if (this.sonar.Distance > 5)
+            {
+                motorControl(70, 70);
+
             }
-            
+            else
+            {
+                motorControl(0, 0);
+            }
+
+
             /*
             int flag = 0;
 
