@@ -95,7 +95,7 @@ namespace StudentPiER
         /// </param>
         public StudentCode(Robot robot)
         {
-
+            Debug.Print("hello");
             this.robot = robot;
             this.stopwatch = new Stopwatch();
             this.stopwatch.Start();
@@ -220,10 +220,15 @@ namespace StudentPiER
             //gearbox runs when B button is pressed
             if (buttonB)
             {
+                Debug.Print("Button B pressed.");
                 this.gearbox.Throttle = 80;
             }
+            else
+            {
+                this.gearbox.Throttle = 0;
+            }
 
-
+            Debug.Print("hello");
             motorControl(leftMotorSpeed, rightMotorSpeed);
 
 
@@ -239,7 +244,7 @@ namespace StudentPiER
 
             if (this.useRfid)
             {
-                this.ReportFieldItemType(this.rfid.CurrentItemScanned);
+                Debug.Print("rfid");
             }
         }
 
