@@ -255,6 +255,8 @@ namespace StudentPiER
                     Debug.Print("ItemId    = " + rfid.CurrentItemScanned.ItemId);
                     Debug.Print("GroupId   = " + tagIDCurrent);
                     Debug.Print("GroupType = " + tagTypeCurrent);
+
+                    ReportFieldItemType(rfid.CurrentItemScanned);
                 }
                 else
                 {
