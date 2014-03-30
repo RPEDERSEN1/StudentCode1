@@ -415,6 +415,7 @@ namespace StudentPiER
         {
             if (stopwatch.ElapsedTime > 1 && rfid.CurrentItemScanned != null)
             {
+                Debug.Print("Why'd you scan this shit? : ");
                 Debug.Print(rfid.CurrentItemScanned.GetHashCode().ToString());
                 stopwatch.Restart();
             }
