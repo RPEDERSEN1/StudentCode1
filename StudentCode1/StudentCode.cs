@@ -154,6 +154,12 @@ namespace StudentPiER
         /// </summary>
         public int lower = 70; // lower bound
         public int upper = 100; // upper bound
+
+        public int motorSpeed(int input, int low, double difference) {
+            //     (gives you sign +1 or -1)
+            return (input / Math.Abs(input)) * low + (int)(input * difference);
+        }
+
         public void TeleoperatedCode()
         {
             Debug.Print("Tele-op " + this.stopwatch.ElapsedTime);
@@ -161,12 +167,11 @@ namespace StudentPiER
             bool buttonB = this.robot.PiEMOSDigitalVals[1];
             bool leftButton = this.robot.PiEMOSDigitalVals[4];
             bool rightButton = this.robot.PiEMOSDigitalVals[5];
-
-            bool rightDigitalStick = this.robot.PiEMOSDigitalVals[6];
-            int rightStick = this.robot.PiEMOSAnalogVals[1];
-            
-            int leftStick = this.robot.PiEMOSAnalogVals[3];
-
+            bool rightDigitalStick = this.robot.PiEMOSDigitalVals[7];
+            bool leftDigitalStick = this.robot.PiEMOSDigitalVals[6];
+            int rightStickY = this.robot.PiEMOSAnalogVals[1];
+            int leftStickX = this.robot.PiEMOSAnalogVals[2];
+            int leftStickY = this.robot.PiEMOSAnalogVals[3];
             int leftTrigger = this.robot.PiEMOSAnalogVals[4];
 
             int rightMotorSpeed = 0;
@@ -190,15 +195,39 @@ namespace StudentPiER
             }
 
             double diff = (upper - lower) / 100.0; // some factor that will be used
-            if (Math.Abs(rightStick) >= 10)
+            if (leftDigitalStick) //the other kind of drive control
             {
-                //                (gives you sign +1 or -1)
-                rightMotorSpeed = (rightStick / Math.Abs(rightStick)) * lower + (int)(rightStick * diff);
+                int speed = 0;
+
+                if (Math.Abs(rightStickY) >= 10)
+                {
+                    speed = motorSpeed(rightStickY, lower, diff);
+                }
+
+                if (Math.Abs(leftStickX) >= 10)
+                {
+                    Debug.Print("x");
+                    rightMotorSpeed = speed - (int)(leftStickX * 1.0);
+                    leftMotorSpeed = speed + (int)(leftStickX * 1.0);
+                    Debug.Print(rightMotorSpeed.ToString() + " " + leftMotorSpeed.ToString());
+                }
+                else
+                {
+                    rightMotorSpeed = speed;
+                    leftMotorSpeed = speed;
+                }
             }
-            if (Math.Abs(leftStick) >= 10)
+            else
             {
-                leftMotorSpeed = (leftStick / Math.Abs(leftStick)) * lower + (int)(leftStick * diff);
-                            
+                if (Math.Abs(rightStickY) >= 10)
+                {
+                    //                (gives you sign +1 or -1)
+                    rightMotorSpeed = motorSpeed(rightStickY, lower, diff);
+                }
+                if (Math.Abs(leftStickY) >= 10)
+                {
+                    leftMotorSpeed = motorSpeed(leftStickY, lower, diff);
+                }
             }
 
             //slow mode (left Trigger)
@@ -210,12 +239,11 @@ namespace StudentPiER
             //reversing left motor for sim purposes
             if (rightDigitalStick)
             {
-                //leftMotorSpeed = -1 * leftMotorSpeed;
-                this.leftMotor.ReverseMotorDirection = true;
-                rightDigitalStick = false;
+                leftMotorSpeed = -1 * leftMotorSpeed;
+                //Debug.Print(rightDigitalStick.ToString());
+                //this.leftMotor.ReverseMotorDirection = true;
+                //rightDigitalStick = false;
             }
-           
-            Debug.Print(leftTrigger.ToString());
 
             //gearbox runs when B button is pressed
             if (buttonB)
@@ -228,9 +256,7 @@ namespace StudentPiER
                 this.gearbox.Throttle = 0;
             }
 
-            Debug.Print("hello");
             motorControl(leftMotorSpeed, rightMotorSpeed);
-
 
             this.robot.FeedbackAnalogVals[0] = this.rightMotor.Throttle;
             this.robot.FeedbackAnalogVals[1] = this.leftMotor.Throttle;
