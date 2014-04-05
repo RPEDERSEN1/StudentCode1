@@ -270,7 +270,41 @@ namespace StudentPiER
 
             if (this.useRfid)
             {
-                Debug.Print("rfid");
+                Debug.Print("CurrentItemScanned:");
+                // test if we're in range of a tag
+                if (rfid.CurrentItemScanned != null)
+                {
+                    // we are in range of a tag. here is its information.
+                    int tagIDCurrent = rfid.CurrentItemScanned.GroupId;
+                    int tagTypeCurrent = rfid.CurrentItemScanned.GroupType;
+
+                    Debug.Print("ItemId    = " + rfid.CurrentItemScanned.ItemId);
+                    Debug.Print("GroupId   = " + tagIDCurrent);
+                    Debug.Print("GroupType = " + tagTypeCurrent);
+
+                    ReportFieldItemType(rfid.CurrentItemScanned);
+                }
+                else
+                {
+                    Debug.Print("null");
+                }
+
+                Debug.Print("LastItemScanned:");
+                // test if we've ever found a tag.
+                if (rfid.LastItemScanned != null)
+                {
+                    // information about last successfully scanned box.
+                    int tagIDLast = rfid.LastItemScanned.GroupId;
+                    int tagTypeLast = rfid.LastItemScanned.GroupType;
+
+                    Debug.Print("ItemId    = " + rfid.LastItemScanned.ItemId);
+                    Debug.Print("GroupId   = " + tagIDLast);
+                    Debug.Print("GroupType = " + tagTypeLast);
+                }
+                else
+                {
+                    Debug.Print("null");
+                }
             }
         }
 
@@ -407,6 +441,7 @@ namespace StudentPiER
         {
             if (stopwatch.ElapsedTime > 1 && rfid.CurrentItemScanned != null)
             {
+                Debug.Print("Why'd you scan this shit? : ");
                 Debug.Print(rfid.CurrentItemScanned.GetHashCode().ToString());
                 stopwatch.Restart();
             }
