@@ -252,12 +252,12 @@ namespace StudentPiER
 
             if (buttonA)
             {
-                motorDoor.TargetRotation = 40;
+                motorDoor.TargetRotation = 75;
                 motorDoor.Write();
             }
             else
             {
-                motorDoor.TargetRotation = 75;
+                motorDoor.TargetRotation = 95;
                 motorDoor.Write();
             }
 
