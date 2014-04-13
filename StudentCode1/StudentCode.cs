@@ -85,6 +85,11 @@ namespace StudentPiER
         private Rfid rfid;
 
 
+        private MicroMaestro doorController;
+        private Servo servo;
+        private ServoMotor motorDoor;
+
+
 
         /// <summary>
         ///   Initializes a new instance of the
@@ -108,7 +113,8 @@ namespace StudentPiER
             this.rightMotor = new GrizzlyBear(robot, Watson.Motor.M1);
             this.gearbox = new GrizzlyBear(robot, Watson.Motor.M2, 0, 100, true);
             this.sonar = new AnalogSonarDistanceSensor(robot, Watson.Analog.A5);
-
+            this.doorController = new MicroMaestro(robot, 12);
+            this.motorDoor = new ServoMotor(robot, doorController,0,2400,9600);
             this.leftEncoder = new GrizzlyEncoder(10, leftMotor, robot);
             this.rightEncoder = new GrizzlyEncoder(10, rightMotor, robot);
 
@@ -144,7 +150,7 @@ namespace StudentPiER
             this.leftMotor.Throttle = left;
             this.rightMotor.Throttle = right;
         }
-        
+
         /// <summary>
         /// The robot will call this method every time it needs to run the
         /// user-controlled student code
@@ -152,10 +158,11 @@ namespace StudentPiER
         /// new PiEMOS analog/digital values and then use them to update the
         /// actuator states
         /// </summary>
-        public int lower = 70; // lower bound
+        public int lower = 60; // lower bound
         public int upper = 100; // upper bound
 
-        public int motorSpeed(int input, int low, double difference) {
+        public int motorSpeed(int input, int low, double difference)
+        {
             //     (gives you sign +1 or -1)
             return (input / Math.Abs(input)) * low + (int)(input * difference);
         }
@@ -164,46 +171,36 @@ namespace StudentPiER
         {
             Debug.Print("Tele-op " + this.stopwatch.ElapsedTime);
 
+            bool buttonA = this.robot.PiEMOSDigitalVals[0];
             bool buttonB = this.robot.PiEMOSDigitalVals[1];
-            bool leftButton = this.robot.PiEMOSDigitalVals[4];
-            bool rightButton = this.robot.PiEMOSDigitalVals[5];
+            bool leftBumper = this.robot.PiEMOSDigitalVals[4];
+            bool rightBumper = this.robot.PiEMOSDigitalVals[5];
             bool rightDigitalStick = this.robot.PiEMOSDigitalVals[7];
             bool leftDigitalStick = this.robot.PiEMOSDigitalVals[6];
             int rightStickY = this.robot.PiEMOSAnalogVals[1];
             int leftStickX = this.robot.PiEMOSAnalogVals[2];
             int leftStickY = this.robot.PiEMOSAnalogVals[3];
             int leftTrigger = this.robot.PiEMOSAnalogVals[4];
+            int rightTrigger = this.robot.PiEMOSAnalogVals[5];
 
             int rightMotorSpeed = 0;
             int leftMotorSpeed = 0;
+            motorDoor.AngularSpeed = 10;
 
 
             //power given to motors will always be above a certain threshold (lower bound)
             // features jimmy would call useless
-            if (leftButton)
-            {
-                lower--;
-                Debug.Print(lower.ToString());
-                leftButton = false;
-
-            }
-            if (rightButton)
-            {
-                lower++;
-                Debug.Print(lower.ToString());
-                rightButton = false;
-            }
 
             double diff = (upper - lower) / 100.0; // some factor that will be used
-            if (leftDigitalStick) //the other kind of drive control
+            /*if (leftDigitalStick) //the other kind of drive control
             {
                 int speed = 0;
-
+ 
                 if (Math.Abs(rightStickY) >= 10)
                 {
                     speed = motorSpeed(rightStickY, lower, diff);
                 }
-
+ 
                 if (Math.Abs(leftStickX) >= 10)
                 {
                     Debug.Print("x");
@@ -215,20 +212,20 @@ namespace StudentPiER
                 {
                     rightMotorSpeed = speed;
                     leftMotorSpeed = speed;
-                }
+                }  
             }
             else
+            {*/
+            if (Math.Abs(rightStickY) >= 10)
             {
-                if (Math.Abs(rightStickY) >= 10)
-                {
-                    //                (gives you sign +1 or -1)
-                    rightMotorSpeed = motorSpeed(rightStickY, lower, diff);
-                }
-                if (Math.Abs(leftStickY) >= 10)
-                {
-                    leftMotorSpeed = motorSpeed(leftStickY, lower, diff);
-                }
+                //                (gives you sign +1 or -1)
+                leftMotorSpeed = motorSpeed(rightStickY, lower, diff);
             }
+            if (Math.Abs(leftStickY) >= 10)
+            {
+                rightMotorSpeed = -1 * motorSpeed(leftStickY, lower, diff);
+            }
+            //}
 
             //slow mode (left Trigger)
             if (leftTrigger > 5)
@@ -237,19 +234,38 @@ namespace StudentPiER
                 leftMotorSpeed = (int)(0.7 * leftMotorSpeed);
             }
             //reversing left motor for sim purposes
-            if (rightDigitalStick)
+            if (!rightDigitalStick)
             {
                 leftMotorSpeed = -1 * leftMotorSpeed;
                 //Debug.Print(rightDigitalStick.ToString());
                 //this.leftMotor.ReverseMotorDirection = true;
                 //rightDigitalStick = false;
             }
-
-            //gearbox runs when B button is pressed
-            if (buttonB)
+            if (!leftDigitalStick)
             {
-                Debug.Print("Button B pressed.");
-                this.gearbox.Throttle = 80;
+                rightMotorSpeed = -1 * rightMotorSpeed;
+                //Debug.Print(rightDigitalStick.ToString());
+                //this.leftMotor.ReverseMotorDirection = true;
+                //rightDigitalStick = false;
+            }
+
+
+            if (buttonA)
+            {
+                motorDoor.TargetRotation = 40;
+                motorDoor.Write();
+            }
+            else
+            {
+                motorDoor.TargetRotation = 75;
+                motorDoor.Write();
+            }
+
+            //gearbox runs when Right Trigger is pressed
+            if (rightTrigger > 5)
+            {
+                Debug.Print("Right Trigger pressed.");
+                this.gearbox.Throttle = rightTrigger;
             }
             else
             {
@@ -282,6 +298,7 @@ namespace StudentPiER
                     Debug.Print("GroupId   = " + tagIDCurrent);
                     Debug.Print("GroupType = " + tagTypeCurrent);
 
+                    //report dat shit
                     ReportFieldItemType(rfid.CurrentItemScanned);
                 }
                 else
@@ -366,7 +383,7 @@ namespace StudentPiER
 
             /*
             int flag = 0;
-
+ 
             while (flag == 0)
             {
                 this.rightMotor.Throttle = 100;
@@ -403,7 +420,7 @@ namespace StudentPiER
                     flag = 4;
                 }
             }
-
+ 
             while (flag == 4)
             {
                 this.rightMotor.Throttle = 100;
@@ -418,7 +435,7 @@ namespace StudentPiER
                 return;
             }
             */
-            
+
 
         }
 
